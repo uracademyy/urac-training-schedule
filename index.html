@@ -1641,6 +1641,30 @@ function isCohortPast(name) {
   return !!maxDate && maxDate < todayIso;
 }
 
+function isCohortFuture(name) {
+  if (!name) return false;
+  const rows = CALENDAR[name];
+  if (!rows || !rows.length) return false;
+  const todayIso = TODAY.getFullYear() + '-' + String(TODAY.getMonth() + 1).padStart(2, '0') + '-' + String(TODAY.getDate()).padStart(2, '0');
+  let minDate = '';
+  rows.forEach(r => { if (r.date_iso && (!minDate || r.date_iso < minDate)) minDate = r.date_iso; });
+  return !!minDate && minDate > todayIso;
+}
+
+function extractDateFromHeader(str) {
+  if (!str) return null;
+  const m = /(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(str);
+  if (!m) return null;
+  const d = new Date(parseInt(m[3], 10), parseInt(m[2], 10) - 1, parseInt(m[1], 10));
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function isFutureDateHeader(str) {
+  const d = extractDateFromHeader(str);
+  if (!d) return false;
+  return (d.getFullYear() > TODAY.getFullYear()) || (d.getFullYear() === TODAY.getFullYear() && d.getMonth() > TODAY.getMonth());
+}
+
 function updateTrainerViewBtn() {
   const btn = document.getElementById('trainerViewBtn');
   if (isTrainerUnlocked()) {
@@ -1687,6 +1711,8 @@ document.getElementById('trainerViewBtn').addEventListener('click', () => {
     renderMentors();
     renderDashboard();
     renderFeedbackAccess();
+    renderExams();
+    renderArrangement();
   } else {
     openPinModal();
   }
@@ -1704,6 +1730,8 @@ document.getElementById('pinSubmitBtn').addEventListener('click', () => {
     renderMentors();
     renderDashboard();
     renderFeedbackAccess();
+    renderExams();
+    renderArrangement();
   } else {
     document.getElementById('pinError').style.display = 'block';
   }
@@ -1727,7 +1755,7 @@ function populateCohortSelect() {
     return ca - cb;
   });
   if (!isTrainerUnlocked()) {
-    names = names.filter(n => !isCohortPast(n));
+    names = names.filter(n => !isCohortPast(n) && !isCohortFuture(n));
   }
   cohortNames = names.length ? names : Object.keys(CALENDAR).slice(0, 1);
   cohortNames.forEach(name => {
@@ -2328,8 +2356,9 @@ function cleanSourceSheetLabel(name) {
 
 function renderExams() {
   const body = document.getElementById('examsBody');
-  if (!EXAMS.length) { body.innerHTML = `<div class="empty">${I18N[LANG].empty_calendar}</div>`; return; }
-  body.innerHTML = EXAMS.map(e => {
+  const visibleExams = isTrainerUnlocked() ? EXAMS : EXAMS.filter(e => !isFutureDateHeader(e.date_header));
+  if (!visibleExams.length) { body.innerHTML = `<div class="empty">${I18N[LANG].empty_calendar}</div>`; return; }
+  body.innerHTML = visibleExams.map(e => {
     const lines = (e.detail || '').split('|').map(s => s.trim()).filter(Boolean);
     const sourceLabel = cleanSourceSheetLabel(e.source_sheet);
     return `
@@ -2347,7 +2376,7 @@ function renderExams() {
   }).join('');
 }
 
-function parseArrangement(text) { const rows = parseCSV(text); return rows.map(r => ({ date_header: (r.date_header || '').trim(), title: (r.title || '').trim(), time_slot: (r.time_slot || '').trim(), col_type: (r.col_type || '').trim(), col_label: (r.col_label || '').trim(), name: (r.name || '').trim(), subject: (r.subject || '').trim(), })).filter(r => r.date_header && r.time_slot); } function renderArrangement() { const body = document.getElementById('arrangementBody'); if (!ARRANGEMENT.length) { body.innerHTML = '<div class="empty">' + I18N[LANG].empty_arrangement + '</div>'; return; } const dateOrder = []; const dateMap = new Map(); ARRANGEMENT.forEach(r => { if (!dateMap.has(r.date_header)) { dateMap.set(r.date_header, { title: r.title, rows: [] }); dateOrder.push(r.date_header); } dateMap.get(r.date_header).rows.push(r); }); body.innerHTML = dateOrder.map(dateKey => { const grp = dateMap.get(dateKey); const rows = grp.rows; const cols = []; rows.forEach(r => { const ct0 = (r.col_type || '').toLowerCase(); if (ct0 !== 'rest' && ct0 !== 'lunch' && r.col_label && cols.indexOf(r.col_label) === -1) cols.push(r.col_label); }); const slotOrder = []; rows.forEach(r => { if (slotOrder.indexOf(r.time_slot) === -1) slotOrder.push(r.time_slot); }); const assessorMap = {}; rows.filter(r => r.time_slot === 'Assessor').forEach(r => { assessorMap[r.col_label] = r.name; }); const nameHtml = val => val ? val.split('|').map(s => escapeHtml(s.trim())).join('<br>') : ''; const bodyRows = slotOrder.filter(s => s !== 'Assessor').map(slot => { const slotRows = rows.filter(r => r.time_slot === slot); const restRow = slotRows.find(r => { const ct1 = (r.col_type || '').toLowerCase(); return ct1 === 'rest' || ct1 === 'lunch'; }); if (restRow) { const ct2 = (restRow.col_type || '').toLowerCase(); const cls2 = ct2 === 'lunch' ? 'arr-lunch' : 'arr-rest'; const lbl2 = restRow.name || (ct2 === 'lunch' ? 'Lunch' : 'Rest'); return '<tr><td class="arr-time">' + escapeHtml(slot) + '</td><td class="' + cls2 + '" colspan="' + cols.length + '">' + escapeHtml(lbl2) + '</td></tr>'; } const nameCells = cols.map(c => { const match = slotRows.find(r => r.col_label === c); const val = match ? match.name : ''; return '<td' + (val ? '' : ' class="arr-empty"') + '>' + nameHtml(val) + '</td>'; }).join(''); let out = '<tr><td class="arr-time">' + escapeHtml(slot) + '</td>' + nameCells + '</tr>'; if (slotRows.some(r => r.subject)) { const subjCells = cols.map(c => { const match = slotRows.find(r => r.col_label === c); return '<td class="arr-subject">' + (match && match.subject ? escapeHtml(match.subject) : '') + '</td>'; }).join(''); out += '<tr class="arr-subject-row"><td class="arr-time arr-subject-label">' + I18N[LANG].arrangement_subject + '</td>' + subjCells + '</tr>'; } return out; }).join(''); const headerCells = cols.map(c => '<th>' + escapeHtml(c) + '</th>').join(''); const assessorCells = cols.map(c => '<td class="arr-assessor">' + (assessorMap[c] ? escapeHtml(assessorMap[c]) : '') + '</td>').join(''); const titleHtml = grp.title ? '<div class="meta">' + escapeHtml(grp.title) + '</div>' : ''; return '<div class="exam-card arr-card"><div class="exam-card-head"><div class="exam-icon">🗂️</div><div class="exam-title-wrap"><h3>' + escapeHtml(dateKey) + '</h3>' + titleHtml + '</div></div><div class="arr-table-wrap"><table class="arr-table"><thead><tr><th></th>' + headerCells + '</tr><tr class="arr-assessor-row"><td class="arr-time">' + I18N[LANG].arrangement_assessor + '</td>' + assessorCells + '</tr></thead><tbody>' + bodyRows + '</tbody></table></div></div>'; }).join(''); } // ---------- Mentors / Roster ----------
+function parseArrangement(text) { const rows = parseCSV(text); return rows.map(r => ({ date_header: (r.date_header || '').trim(), title: (r.title || '').trim(), time_slot: (r.time_slot || '').trim(), col_type: (r.col_type || '').trim(), col_label: (r.col_label || '').trim(), name: (r.name || '').trim(), subject: (r.subject || '').trim(), })).filter(r => r.date_header && r.time_slot); } function renderArrangement() { const body = document.getElementById('arrangementBody'); if (!ARRANGEMENT.length) { body.innerHTML = '<div class="empty">' + I18N[LANG].empty_arrangement + '</div>'; return; } const dateOrder = []; const dateMap = new Map(); const visibleArrangement = isTrainerUnlocked() ? ARRANGEMENT : ARRANGEMENT.filter(r => !isFutureDateHeader(r.date_header)); visibleArrangement.forEach(r => { if (!dateMap.has(r.date_header)) { dateMap.set(r.date_header, { title: r.title, rows: [] }); dateOrder.push(r.date_header); } dateMap.get(r.date_header).rows.push(r); }); body.innerHTML = dateOrder.map(dateKey => { const grp = dateMap.get(dateKey); const rows = grp.rows; const cols = []; rows.forEach(r => { const ct0 = (r.col_type || '').toLowerCase(); if (ct0 !== 'rest' && ct0 !== 'lunch' && r.col_label && cols.indexOf(r.col_label) === -1) cols.push(r.col_label); }); const slotOrder = []; rows.forEach(r => { if (slotOrder.indexOf(r.time_slot) === -1) slotOrder.push(r.time_slot); }); const assessorMap = {}; rows.filter(r => r.time_slot === 'Assessor').forEach(r => { assessorMap[r.col_label] = r.name; }); const nameHtml = val => val ? val.split('|').map(s => escapeHtml(s.trim())).join('<br>') : ''; const bodyRows = slotOrder.filter(s => s !== 'Assessor').map(slot => { const slotRows = rows.filter(r => r.time_slot === slot); const restRow = slotRows.find(r => { const ct1 = (r.col_type || '').toLowerCase(); return ct1 === 'rest' || ct1 === 'lunch'; }); if (restRow) { const ct2 = (restRow.col_type || '').toLowerCase(); const cls2 = ct2 === 'lunch' ? 'arr-lunch' : 'arr-rest'; const lbl2 = restRow.name || (ct2 === 'lunch' ? 'Lunch' : 'Rest'); return '<tr><td class="arr-time">' + escapeHtml(slot) + '</td><td class="' + cls2 + '" colspan="' + cols.length + '">' + escapeHtml(lbl2) + '</td></tr>'; } const nameCells = cols.map(c => { const match = slotRows.find(r => r.col_label === c); const val = match ? match.name : ''; return '<td' + (val ? '' : ' class="arr-empty"') + '>' + nameHtml(val) + '</td>'; }).join(''); let out = '<tr><td class="arr-time">' + escapeHtml(slot) + '</td>' + nameCells + '</tr>'; if (slotRows.some(r => r.subject)) { const subjCells = cols.map(c => { const match = slotRows.find(r => r.col_label === c); return '<td class="arr-subject">' + (match && match.subject ? escapeHtml(match.subject) : '') + '</td>'; }).join(''); out += '<tr class="arr-subject-row"><td class="arr-time arr-subject-label">' + I18N[LANG].arrangement_subject + '</td>' + subjCells + '</tr>'; } return out; }).join(''); const headerCells = cols.map(c => '<th>' + escapeHtml(c) + '</th>').join(''); const assessorCells = cols.map(c => '<td class="arr-assessor">' + (assessorMap[c] ? escapeHtml(assessorMap[c]) : '') + '</td>').join(''); const titleHtml = grp.title ? '<div class="meta">' + escapeHtml(grp.title) + '</div>' : ''; return '<div class="exam-card arr-card"><div class="exam-card-head"><div class="exam-icon">🗂️</div><div class="exam-title-wrap"><h3>' + escapeHtml(dateKey) + '</h3>' + titleHtml + '</div></div><div class="arr-table-wrap"><table class="arr-table"><thead><tr><th></th>' + headerCells + '</tr><tr class="arr-assessor-row"><td class="arr-time">' + I18N[LANG].arrangement_assessor + '</td>' + assessorCells + '</tr></thead><tbody>' + bodyRows + '</tbody></table></div></div>'; }).join(''); } // ---------- Mentors / Roster ----------
 const rosterCohortSelect = document.getElementById('rosterCohortSelect');
 let rosterCohortNames = [];
 
