@@ -2641,8 +2641,11 @@ const GARDEN_EXTRA_SPOTS = [
   { x: 72, topY: 54, stemTop: 62, stemH: 14, color: '#8fd3f4' },
 ];
 function gardenExtraCount(mark) {
-  const m = Number(mark) || 0;
-  return Math.max(0, Math.min(GARDEN_EXTRA_SPOTS.length, Math.floor((m - 7500) / 375) + 1));
+  // Only ever called when the trainee has reached stage 9 (Flourishing
+  // Garden), so anyone who gets here is shown fully bloomed with all
+  // extra flowers -- no more gradual filling based on how far past the
+  // threshold their mark is.
+  return GARDEN_EXTRA_SPOTS.length;
 }
 // Same full-bloom flower as the beautiful-bloom stage, just re-centered so
 // extra garden flowers can be planted around it once a trainee passes 7,500
