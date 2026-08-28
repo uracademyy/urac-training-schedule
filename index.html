@@ -2613,8 +2613,8 @@ function formatScore(n) {
 //   2,500-3,499  -> young plant
 //   3,500-4,499  -> budding plant
 //   4,500-5,999  -> first bloom
-//   6,000-7,499  -> beautiful bloom
-//   7,500-9,000+ -> flourishing garden -- once fully bloomed, extra flowers
+//   6,000-7,444  -> beautiful bloom
+//   7,445-9,000+ -> flourishing garden -- once fully bloomed, extra flowers
 //                   keep sprouting alongside the main one, up to a cap so the
 //                   card doesn't get overcrowded
 function plantStageFromMark(mark) {
@@ -2627,7 +2627,7 @@ function plantStageFromMark(mark) {
   if (m < 3500) return 5;
   if (m < 4500) return 6;
   if (m < 6000) return 7;
-  if (m < 7500) return 8;
+  if (m < 7445) return 8;
   return 9;
 }
 
