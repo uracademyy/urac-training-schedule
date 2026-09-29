@@ -2151,7 +2151,7 @@ function renderDashboard() {
   let nextExamDate = null;
   EXAMS.forEach(e => {
     const d = parseDateFromHeader(e.date_header);
-    if (d && d >= TODAY && /week 1/i.test(e.date_header) && (!nextExamDate || d < nextExamDate)) nextExamDate = d;
+    if (d && d >= TODAY && (!nextExamDate || d < nextExamDate)) nextExamDate = d;
   });
   const daysToExam = nextExamDate ? Math.round((nextExamDate - TODAY) / 86400000) : null;
   startExamCountdown(nextExamDate);
