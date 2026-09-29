@@ -829,6 +829,18 @@
     max-width: 340px; width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     text-align: center;
   }
+  .admin-panel-modal { max-width: 620px; max-height: 84vh; overflow-y: auto; text-align: left; }
+  .admin-panel-modal h3 { text-align: center; }
+  .admin-panel-modal h4 { margin: 18px 0 8px; font-size: 0.95rem; color: var(--ink); }
+  .admin-note { font-size: 0.78rem !important; color: var(--muted); text-align: left !important; }
+  .admin-field-row { margin-bottom: 10px; }
+  .admin-field-row label { display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 4px; color: var(--ink); }
+  .admin-field-row input[type="text"] { width: 100%; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--beige); font-family: inherit; box-sizing: border-box; text-align: left; letter-spacing: normal; }
+  .admin-panel-checks { display: flex; flex-wrap: wrap; gap: 8px 14px; }
+  .admin-check { display: flex !important; align-items: center; gap: 5px; font-size: 0.78rem !important; font-weight: 400 !important; width: auto; }
+  .admin-check input { width: auto !important; margin: 0 !important; }
+  .admin-save-msg { color: #3a8a4a; font-size: 0.8rem; margin: 4px 0 0; text-align: center; }
+  #adminPasswordFields, #adminPanelFields { margin-bottom: 10px; }
   .pin-modal h3 { margin: 0 0 8px; font-size: 1.1rem; color: var(--ink); }
   .pin-modal p { margin: 0 0 16px; font-size: 0.85rem; color: var(--muted); }
   .pin-modal input {
@@ -865,6 +877,17 @@
   }
   .site-gate-card input:focus { outline: none; border-color: var(--gold); }
   .site-gate-card .submit-btn { width: 100%; padding: 13px; font-size: 0.9rem; margin-top: 10px; }
+  .site-gate-card select.site-gate-role-select {
+    width: 100%; padding: 13px 14px; border-radius: 14px; border: 1px solid var(--border);
+    background: var(--beige); font-size: 0.95rem; text-align: center;
+    font-family: inherit; margin-bottom: 8px; box-sizing: border-box;
+  }
+  body.subject-mode nav.pillnav { display: none !important; }
+  body.subject-mode #examsSubNav { display: none !important; }
+  body.subject-mode .panel { display: none !important; }
+  body.subject-mode #panel-exams { display: block !important; }
+  body.subject-mode #examsScheduleView { display: none !important; }
+  body.subject-mode #examsArrangementView { display: block !important; }
 </style>
 </head>
 <body>
@@ -873,7 +896,14 @@
   <div class="site-gate-card">
     <div class="site-gate-icon">🔒</div>
     <h2 data-i18n="gate_title">Welcome to URAC Training</h2>
-    <p data-i18n="gate_sub">Please enter the password to continue.</p>
+    <p data-i18n="gate_sub">Please select your role and enter the password to continue.</p>
+    <select id="siteGateRole" class="site-gate-role-select">
+      <option value="trainee">Trainee</option>
+      <option value="trainer">Trainer</option>
+      <option value="examiner">Examiner</option>
+      <option value="backend">Backend</option>
+      <option value="subject">Subject</option>
+    </select>
     <input type="password" id="siteGateInput" placeholder="Password" autocomplete="off">
     <p class="pin-error" id="siteGateError" style="display:none" data-i18n="gate_error">Incorrect password. Please try again.</p>
     <button type="button" class="submit-btn" id="siteGateSubmitBtn" data-i18n="gate_submit">Enter</button>
@@ -882,7 +912,7 @@
 <script>
   (function(){
     try {
-      if (localStorage.getItem('uracSiteUnlocked') === '1') {
+      if (localStorage.getItem('uracRole')) {
         document.getElementById('siteGateOverlay').style.display = 'none';
       }
     } catch(e) {}
@@ -899,20 +929,40 @@
   </div>
   <div class="icons">
     <button class="icon-btn clickable" id="searchIconBtn" title="Search schedule">🔍</button>
-    <button class="icon-btn clickable" id="trainerViewBtn" title="Trainer view">🔒</button>
+    <button class="icon-btn clickable" id="trainerViewBtn" title="Admin access">🔒</button>
+    <button class="icon-btn clickable" id="adminPanelBtn" title="Manage role access" style="display:none">⚙️</button>
+    <button class="icon-btn clickable" id="logoutBtn" title="Log out" style="display:none">🚪</button>
     <button class="icon-btn lang clickable" id="langBtn" title="Switch language">中文</button>
   </div>
 </header>
 
 <div class="pin-modal-overlay" id="pinModalOverlay" style="display:none">
   <div class="pin-modal">
-    <h3>Trainer Access</h3>
-    <p>Enter the trainer PIN to view past cohorts and full roster history.</p>
-    <input type="password" id="pinInput" placeholder="PIN" autocomplete="off">
-    <p class="pin-error" id="pinError" style="display:none">Incorrect PIN. Please try again.</p>
+    <h3>Admin Access</h3>
+    <p>Enter the admin password to view past cohorts and manage role access.</p>
+    <input type="password" id="pinInput" placeholder="Admin password" autocomplete="off">
+    <p class="pin-error" id="pinError" style="display:none">Incorrect password. Please try again.</p>
     <div class="pin-modal-actions">
       <button type="button" class="submit-btn btn-secondary" id="pinCancelBtn">Cancel</button>
       <button type="button" class="submit-btn" id="pinSubmitBtn">Unlock</button>
+    </div>
+  </div>
+</div>
+
+<div class="pin-modal-overlay" id="adminPanelOverlay" style="display:none">
+  <div class="pin-modal admin-panel-modal">
+    <h3>Manage Role Access</h3>
+    <p class="admin-note">Changes here are saved on this device/browser only. To make them apply for everyone, they need to be published to the live site.</p>
+    <h4>Role Passwords</h4>
+    <div id="adminPasswordFields"></div>
+    <button type="button" class="submit-btn" id="adminSavePasswordsBtn">Save Passwords</button>
+    <p class="admin-save-msg" id="adminPasswordSaveMsg" style="display:none">Saved.</p>
+    <h4>Panel Access per Role</h4>
+    <div id="adminPanelFields"></div>
+    <button type="button" class="submit-btn" id="adminSavePanelsBtn">Save Access</button>
+    <p class="admin-save-msg" id="adminPanelSaveMsg" style="display:none">Saved.</p>
+    <div class="pin-modal-actions">
+      <button type="button" class="submit-btn btn-secondary" id="adminPanelCloseBtn">Close</button>
     </div>
   </div>
 </div>
@@ -1591,33 +1641,171 @@ document.querySelectorAll('#examsSubNav button').forEach(btn => { btn.addEventLi
 });
 
 // ---------- Site-wide entry gate (soft gate -- deters casual visitors on this public site) ----------
-const SITE_GATE_PASSWORD = "IAMTHEBEST";
-const SITE_GATE_STORAGE_KEY = "uracSiteUnlocked";
+const ROLE_PASSWORDS = {
+  backend: "TRAINER111",
+  trainer: "TRAINER111",
+  examiner: "TRAINER111",
+  subject: "TRAINER111",
+  trainee: "IAMTHEBEST",
+};
+const SITE_GATE_STORAGE_KEY = "uracRole";
+
+const TRAINER_PIN = "TRAINER111"; // legacy, superseded by ADMIN_PIN below
+const TRAINER_STORAGE_KEY = "uracTrainerUnlocked"; // legacy, superseded by ADMIN_STORAGE_KEY
+const ADMIN_PIN = "URACADMIN999";
+const ADMIN_STORAGE_KEY = "uracAdminUnlocked";
+const FIREBASE_PROJECT_ID = "urac-training-schedule";
+const FIREBASE_API_KEY = "AIzaSyBqczfncfXESWiee5V9qiNy78QM1Am6Ja8";
+const FIRESTORE_DOC_URL = "https://firestore.googleapis.com/v1/projects/" + FIREBASE_PROJECT_ID + "/databases/(default)/documents/config/roleAccess?key=" + FIREBASE_API_KEY;
+let REMOTE_ROLE_CONFIG = null;
+function fsValue(v) {
+  if (!v) return undefined;
+  if ('stringValue' in v) return v.stringValue;
+  if ('mapValue' in v) {
+    const out = {};
+    const f = (v.mapValue && v.mapValue.fields) || {};
+    Object.keys(f).forEach(function (k) { out[k] = fsValue(f[k]); });
+    return out;
+  }
+  if ('arrayValue' in v) {
+    return ((v.arrayValue && v.arrayValue.values) || []).map(fsValue);
+  }
+  if ('booleanValue' in v) return v.booleanValue;
+  return undefined;
+}
+function toFsFields(obj) {
+  const fields = {};
+  Object.keys(obj).forEach(function (k) {
+    const val = obj[k];
+    if (typeof val === 'string') { fields[k] = { stringValue: val }; }
+    else if (Array.isArray(val)) { fields[k] = { arrayValue: { values: val.map(function (s) { return { stringValue: s }; }) } }; }
+    else if (val && typeof val === 'object') { fields[k] = { mapValue: { fields: toFsFields(val) } }; }
+  });
+  return fields;
+}
+function loadRemoteRoleConfig() {
+  return fetch(FIRESTORE_DOC_URL).then(function (res) {
+    if (!res.ok) throw new Error('fetch failed');
+    return res.json();
+  }).then(function (data) {
+    const fields = data.fields || {};
+    REMOTE_ROLE_CONFIG = {
+      adminKey: fsValue(fields.adminKey) || ADMIN_PIN,
+      passwords: fsValue(fields.passwords) || {},
+      panels: fsValue(fields.panels) || {}
+    };
+    try { localStorage.setItem('uracRemoteRoleConfig', JSON.stringify(REMOTE_ROLE_CONFIG)); } catch (e) {}
+  }).catch(function () {});
+}
+function saveRemoteRoleConfig(nextPasswords, nextPanels) {
+  const current = REMOTE_ROLE_CONFIG || { adminKey: ADMIN_PIN, passwords: {}, panels: {} };
+  const payload = {
+    adminKey: ADMIN_PIN,
+    passwords: nextPasswords !== undefined ? nextPasswords : (current.passwords || {}),
+    panels: nextPanels !== undefined ? nextPanels : (current.panels || {})
+  };
+  return fetch(FIRESTORE_DOC_URL, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields: toFsFields(payload) })
+  }).then(function (res) {
+    if (!res.ok) throw new Error('save failed');
+    REMOTE_ROLE_CONFIG = payload;
+    try { localStorage.setItem('uracRemoteRoleConfig', JSON.stringify(payload)); } catch (e) {}
+    return true;
+  });
+}
+const remoteConfigReady = loadRemoteRoleConfig();
+const PANEL_KEYS = ['dashboard','attendance','calendar','exams','ranking','mentors','feedback'];
+const PANEL_LABELS = { dashboard:'Dashboard', attendance:'Attendance', calendar:'Schedule', exams:'Exams', ranking:'Ranking', mentors:'Trainers & Committee', feedback:'Feedback' };
+const ROLE_LABELS = { backend:'Backend', trainer:'Trainer', examiner:'Examiner', trainee:'Trainee', subject:'Subject' };
+const ROLE_PANELS_DEFAULT = { backend: PANEL_KEYS.slice(), trainer: PANEL_KEYS.slice(), examiner: PANEL_KEYS.slice(), trainee: PANEL_KEYS.slice() };
+
+function isAdminUnlocked() {
+  try { return localStorage.getItem(ADMIN_STORAGE_KEY) === '1'; } catch (e) { return false; }
+}
+function getRolePasswords() {
+  let remote = REMOTE_ROLE_CONFIG;
+  if (!remote) { try { remote = JSON.parse(localStorage.getItem('uracRemoteRoleConfig') || 'null'); } catch (e) { remote = null; } }
+  if (remote && remote.passwords) return Object.assign({}, ROLE_PASSWORDS, remote.passwords);
+  let overrides = {};
+  try { overrides = JSON.parse(localStorage.getItem('uracRolePasswordOverrides') || '{}'); } catch (e) {}
+  return Object.assign({}, ROLE_PASSWORDS, overrides);
+}
+function getRolePanels(role) {
+  const base = ROLE_PANELS_DEFAULT[role] || PANEL_KEYS.slice();
+  let remote = REMOTE_ROLE_CONFIG;
+  if (!remote) { try { remote = JSON.parse(localStorage.getItem('uracRemoteRoleConfig') || 'null'); } catch (e) { remote = null; } }
+  if (remote && remote.panels && remote.panels[role] && remote.panels[role].length) return remote.panels[role];
+  let overrides = {};
+  try { overrides = JSON.parse(localStorage.getItem('uracRolePanelOverrides') || '{}'); } catch (e) {}
+  return overrides[role] || base;
+}
+function applyRolePanelVisibility() {
+  const role = currentRole();
+  if (!role || role === 'subject') return;
+  const allowed = isAdminUnlocked() ? PANEL_KEYS.slice() : getRolePanels(role);
+  document.querySelectorAll('nav.pillnav > button[data-panel]').forEach(btn => {
+    const key = btn.dataset.panel;
+    btn.style.display = allowed.indexOf(key) === -1 ? 'none' : '';
+  });
+  const activeBtn = document.querySelector('nav.pillnav > button.active');
+  if (activeBtn && activeBtn.style.display === 'none') {
+    const firstVisible = Array.from(document.querySelectorAll('nav.pillnav > button[data-panel]')).find(b => b.style.display !== 'none');
+    if (firstVisible) activatePanel(firstVisible.dataset.panel);
+  }
+}
+
+function isTrainerUnlocked() {
+  const role = currentRole();
+  return role === 'backend' || role === 'trainer' || role === 'examiner' || role === 'trainee';
+}
 
 function isSiteUnlocked() {
-  try { return localStorage.getItem(SITE_GATE_STORAGE_KEY) === '1'; } catch (e) { return false; }
+  try { return !!localStorage.getItem(SITE_GATE_STORAGE_KEY); } catch (e) { return false; }
+}
+function currentRole() {
+  try { return localStorage.getItem(SITE_GATE_STORAGE_KEY) || ''; } catch (e) { return ''; }
 }
 function closeSiteGate() {
   const overlay = document.getElementById('siteGateOverlay');
   if (overlay) overlay.style.display = 'none';
 }
+function applyRoleRestrictions() {
+  document.body.classList.toggle('subject-mode', currentRole() === 'subject');
+  applyRolePanelVisibility();
+  updateTrainerViewBtn();
+  if (typeof renderFeedbackAccess === 'function') renderFeedbackAccess();
+  const adminBtn = document.getElementById('adminPanelBtn');
+  if (adminBtn) adminBtn.style.display = isAdminUnlocked() ? '' : 'none';
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) logoutBtn.style.display = currentRole() ? '' : 'none';
+}
 (function initSiteGate() {
   if (isSiteUnlocked()) closeSiteGate();
+  applyRoleRestrictions();
+  const roleSelect = document.getElementById('siteGateRole');
   const input = document.getElementById('siteGateInput');
   const submitBtn = document.getElementById('siteGateSubmitBtn');
   const errorEl = document.getElementById('siteGateError');
   if (!input || !submitBtn || !errorEl) return;
   submitBtn.addEventListener('click', () => {
+    const role = roleSelect.value;
     const val = input.value.trim();
-    if (val === SITE_GATE_PASSWORD) {
-      try { localStorage.setItem(SITE_GATE_STORAGE_KEY, '1'); } catch (e) {}
-      errorEl.style.display = 'none';
-      closeSiteGate();
-    } else {
-      errorEl.style.display = 'block';
-      input.value = '';
-      input.focus();
-    }
+    submitBtn.disabled = true;
+    Promise.resolve(remoteConfigReady).then(function () {
+      submitBtn.disabled = false;
+      if (val === getRolePasswords()[role]) {
+        try { localStorage.setItem(SITE_GATE_STORAGE_KEY, role); } catch (e) {}
+        errorEl.style.display = 'none';
+        applyRoleRestrictions();
+        closeSiteGate();
+      } else {
+        errorEl.style.display = 'block';
+        input.value = '';
+        input.focus();
+      }
+    });
   });
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') submitBtn.click();
@@ -1625,12 +1813,7 @@ function closeSiteGate() {
 })();
 
 // ---------- Trainer access (soft gate -- hides past cohorts on this public site) ----------
-const TRAINER_PIN = "TRAINER111";
-const TRAINER_STORAGE_KEY = "uracTrainerUnlocked";
 
-function isTrainerUnlocked() {
-  return localStorage.getItem(TRAINER_STORAGE_KEY) === '1';
-}
 
 function dateIsoFromCalRow(r) {
   if (r.date_iso) return r.date_iso;
@@ -1677,12 +1860,13 @@ function isFutureDateHeader(str) {
 
 function updateTrainerViewBtn() {
   const btn = document.getElementById('trainerViewBtn');
-  if (isTrainerUnlocked()) {
+  if (!btn) return;
+  if (isAdminUnlocked()) {
     btn.textContent = '🔓';
-    btn.title = 'Trainer view (unlocked) -- click to lock again';
+    btn.title = 'Admin access (unlocked) -- click to lock again';
   } else {
     btn.textContent = '🔒';
-    btn.title = 'Trainer view -- unlock to see past cohorts';
+    btn.title = 'Admin access -- unlock to see past cohorts & manage roles';
   }
 }
 
@@ -1692,7 +1876,8 @@ function updateTrainerViewBtn() {
 // Form" CTA instead -- same tab/nav slot, different audience.
 function renderFeedbackAccess() {
   const t = I18N[LANG];
-  const trainerMode = isTrainerUnlocked();
+  const role = currentRole();
+  const trainerMode = (role === 'trainer' || role === 'examiner' || role === 'backend');
   const traineeEl = document.getElementById('feedbackTraineeView');
   const trainerEl = document.getElementById('feedbackTrainerView');
   if (traineeEl) traineeEl.style.display = trainerMode ? 'none' : '';
@@ -1712,9 +1897,13 @@ function closePinModal() {
 }
 
 document.getElementById('trainerViewBtn').addEventListener('click', () => {
-  if (isTrainerUnlocked()) {
-    localStorage.removeItem(TRAINER_STORAGE_KEY);
+  if (isAdminUnlocked()) {
+    localStorage.removeItem(ADMIN_STORAGE_KEY);
     updateTrainerViewBtn();
+    applyRolePanelVisibility();
+    const adminBtn = document.getElementById('adminPanelBtn');
+    if (adminBtn) adminBtn.style.display = 'none';
+    closeAdminPanel();
     populateCohortSelect();
     populateRosterCohortSelect();
     renderCalendar();
@@ -1730,10 +1919,13 @@ document.getElementById('trainerViewBtn').addEventListener('click', () => {
 document.getElementById('pinCancelBtn').addEventListener('click', closePinModal);
 document.getElementById('pinSubmitBtn').addEventListener('click', () => {
   const val = document.getElementById('pinInput').value.trim();
-  if (val === TRAINER_PIN) {
-    localStorage.setItem(TRAINER_STORAGE_KEY, '1');
+  if (val === ADMIN_PIN) {
+    localStorage.setItem(ADMIN_STORAGE_KEY, '1');
     closePinModal();
     updateTrainerViewBtn();
+    applyRolePanelVisibility();
+    const adminBtn = document.getElementById('adminPanelBtn');
+    if (adminBtn) adminBtn.style.display = '';
     populateCohortSelect();
     populateRosterCohortSelect();
     renderCalendar();
@@ -1750,6 +1942,94 @@ document.getElementById('pinInput').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') document.getElementById('pinSubmitBtn').click();
 });
 
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  try {
+    localStorage.removeItem(SITE_GATE_STORAGE_KEY);
+    localStorage.removeItem(ADMIN_STORAGE_KEY);
+  } catch (e) {}
+  location.reload();
+});
+
+function openAdminPanel() {
+  renderAdminPasswordFields();
+  renderAdminPanelFields();
+  document.getElementById('adminPasswordSaveMsg').style.display = 'none';
+  document.getElementById('adminPanelSaveMsg').style.display = 'none';
+  document.getElementById('adminPanelOverlay').style.display = 'flex';
+}
+function closeAdminPanel() {
+  document.getElementById('adminPanelOverlay').style.display = 'none';
+}
+function renderAdminPasswordFields() {
+  const wrap = document.getElementById('adminPasswordFields');
+  if (!wrap) return;
+  const pw = getRolePasswords();
+  wrap.innerHTML = Object.keys(ROLE_LABELS).map(role => `
+    <div class="admin-field-row">
+      <label>${ROLE_LABELS[role]}</label>
+      <input type="text" data-role-pw="${role}" value="${escapeHtml(pw[role] || '')}" autocomplete="off">
+    </div>
+  `).join('');
+}
+function renderAdminPanelFields() {
+  const wrap = document.getElementById('adminPanelFields');
+  if (!wrap) return;
+  wrap.innerHTML = Object.keys(ROLE_PANELS_DEFAULT).map(role => {
+    const allowed = getRolePanels(role);
+    return `
+      <div class="admin-field-row admin-panel-row">
+        <label>${ROLE_LABELS[role]}</label>
+        <div class="admin-panel-checks">
+          ${PANEL_KEYS.map(key => `
+            <label class="admin-check"><input type="checkbox" data-role-panel="${role}" data-panel-key="${key}" ${allowed.indexOf(key) !== -1 ? 'checked' : ''}> ${PANEL_LABELS[key]}</label>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+document.getElementById('adminPanelBtn').addEventListener('click', openAdminPanel);
+document.getElementById('adminPanelCloseBtn').addEventListener('click', closeAdminPanel);
+document.getElementById('adminSavePasswordsBtn').addEventListener('click', () => {
+  const overrides = {};
+  document.querySelectorAll('#adminPasswordFields input[data-role-pw]').forEach(inp => {
+    const val = inp.value.trim();
+    if (val) overrides[inp.dataset.rolePw] = val;
+  });
+  const msg = document.getElementById('adminPasswordSaveMsg');
+  saveRemoteRoleConfig(overrides, undefined).then(function () {
+    msg.textContent = 'Saved for everyone.';
+    msg.style.display = 'block';
+    setTimeout(() => { msg.style.display = 'none'; }, 2500);
+  }).catch(function () {
+    try { localStorage.setItem('uracRolePasswordOverrides', JSON.stringify(overrides)); } catch (e) {}
+    msg.textContent = 'Could not reach the server -- saved on this device only.';
+    msg.style.display = 'block';
+    setTimeout(() => { msg.style.display = 'none'; }, 3500);
+  });
+});
+document.getElementById('adminSavePanelsBtn').addEventListener('click', () => {
+  const overrides = {};
+  document.querySelectorAll('#adminPanelFields input[data-role-panel]').forEach(inp => {
+    const role = inp.dataset.rolePanel;
+    if (!overrides[role]) overrides[role] = [];
+    if (inp.checked) overrides[role].push(inp.dataset.panelKey);
+  });
+  const msg = document.getElementById('adminPanelSaveMsg');
+  saveRemoteRoleConfig(undefined, overrides).then(function () {
+    applyRolePanelVisibility();
+    msg.textContent = 'Saved for everyone.';
+    msg.style.display = 'block';
+    setTimeout(() => { msg.style.display = 'none'; }, 2500);
+  }).catch(function () {
+    try { localStorage.setItem('uracRolePanelOverrides', JSON.stringify(overrides)); } catch (e) {}
+    applyRolePanelVisibility();
+    msg.textContent = 'Could not reach the server -- saved on this device only.';
+    msg.style.display = 'block';
+    setTimeout(() => { msg.style.display = 'none'; }, 3500);
+  });
+});
+
 // ---------- Calendar ----------
 let CALENDAR = {}, EXAMS = [], MENTORS = [], RANKING = [], ARRANGEMENT = [];
 const cohortSelect = document.getElementById('cohortSelect');
@@ -1764,7 +2044,7 @@ function populateCohortSelect() {
     const cb = b.includes('current') ? 0 : 1;
     return ca - cb;
   });
-  if (!isTrainerUnlocked()) {
+  if (!isAdminUnlocked()) {
     names = names.filter(n => n.toLowerCase().includes('current') || (!isCohortPast(n) && !isCohortFuture(n)));
   }
   cohortNames = names.length ? names : Object.keys(CALENDAR).slice(0, 1);
@@ -2404,7 +2684,7 @@ function renderExams() {
   }).join('');
 }
 
-function parseArrangement(text) { const rows = parseCSV(text); return rows.map(r => ({ date_header: (r.date_header || '').trim(), title: (r.title || '').trim(), time_slot: (r.time_slot || '').trim(), col_type: (r.col_type || '').trim(), col_label: (r.col_label || '').trim(), name: (r.name || '').trim(), subject: (r.subject || '').trim(), })).filter(r => r.date_header && r.time_slot); } function renderArrangement() { const body = document.getElementById('arrangementBody'); if (!ARRANGEMENT.length) { body.innerHTML = '<div class="empty">' + I18N[LANG].empty_arrangement + '</div>'; return; } const dateOrder = []; const dateMap = new Map(); const visibleArrangement = isTrainerUnlocked() ? ARRANGEMENT : ARRANGEMENT.filter(r => !isFutureDateHeader(r.date_header)); visibleArrangement.forEach(r => { if (!dateMap.has(r.date_header)) { dateMap.set(r.date_header, { title: r.title, rows: [] }); dateOrder.push(r.date_header); } dateMap.get(r.date_header).rows.push(r); }); body.innerHTML = dateOrder.map(dateKey => { const grp = dateMap.get(dateKey); const rows = grp.rows; const cols = []; rows.forEach(r => { const ct0 = (r.col_type || '').toLowerCase(); if (ct0 !== 'rest' && ct0 !== 'lunch' && r.col_label && cols.indexOf(r.col_label) === -1) cols.push(r.col_label); }); const slotOrder = []; rows.forEach(r => { if (slotOrder.indexOf(r.time_slot) === -1) slotOrder.push(r.time_slot); }); const assessorMap = {}; rows.filter(r => r.time_slot === 'Assessor').forEach(r => { assessorMap[r.col_label] = r.name; }); const nameHtml = val => val ? val.split('|').map(s => escapeHtml(s.trim())).join('<br>') : ''; const bodyRows = slotOrder.filter(s => s !== 'Assessor').map(slot => { const slotRows = rows.filter(r => r.time_slot === slot); const restRow = slotRows.find(r => { const ct1 = (r.col_type || '').toLowerCase(); return ct1 === 'rest' || ct1 === 'lunch'; }); if (restRow) { const ct2 = (restRow.col_type || '').toLowerCase(); const cls2 = ct2 === 'lunch' ? 'arr-lunch' : 'arr-rest'; const lbl2 = restRow.name || (ct2 === 'lunch' ? 'Lunch' : 'Rest'); return '<tr><td class="arr-time">' + escapeHtml(slot) + '</td><td class="' + cls2 + '" colspan="' + cols.length + '">' + escapeHtml(lbl2) + '</td></tr>'; } const nameCells = cols.map(c => { const match = slotRows.find(r => r.col_label === c); const val = match ? match.name : ''; return '<td' + (val ? '' : ' class="arr-empty"') + '>' + nameHtml(val) + '</td>'; }).join(''); let out = '<tr><td class="arr-time">' + escapeHtml(slot) + '</td>' + nameCells + '</tr>'; if (slotRows.some(r => r.subject)) { const subjCells = cols.map(c => { const match = slotRows.find(r => r.col_label === c); return '<td class="arr-subject">' + (match && match.subject ? escapeHtml(match.subject) : '') + '</td>'; }).join(''); out += '<tr class="arr-subject-row"><td class="arr-time arr-subject-label">' + I18N[LANG].arrangement_subject + '</td>' + subjCells + '</tr>'; } return out; }).join(''); const headerCells = cols.map(c => '<th>' + escapeHtml(c) + '</th>').join(''); const assessorCells = cols.map(c => '<td class="arr-assessor">' + (assessorMap[c] ? escapeHtml(assessorMap[c]) : '') + '</td>').join(''); const titleHtml = grp.title ? '<div class="meta">' + escapeHtml(grp.title) + '</div>' : ''; return '<div class="exam-card arr-card"><div class="exam-card-head"><div class="exam-icon">🗂️</div><div class="exam-title-wrap"><h3>' + escapeHtml(dateKey) + '</h3>' + titleHtml + '</div></div><div class="arr-table-wrap"><table class="arr-table"><thead><tr><th></th>' + headerCells + '</tr><tr class="arr-assessor-row"><td class="arr-time">' + I18N[LANG].arrangement_assessor + '</td>' + assessorCells + '</tr></thead><tbody>' + bodyRows + '</tbody></table></div></div>'; }).join(''); } // ---------- Mentors / Roster ----------
+function parseArrangement(text) { const rows = parseCSV(text); return rows.map(r => ({ date_header: (r.date_header || '').trim(), title: (r.title || '').trim(), time_slot: (r.time_slot || '').trim(), col_type: (r.col_type || '').trim(), col_label: (r.col_label || '').trim(), name: (r.name || '').trim(), subject: (r.subject || '').trim(), })).filter(r => r.date_header && r.time_slot); } function renderArrangement() { const body = document.getElementById('arrangementBody'); if (!ARRANGEMENT.length) { body.innerHTML = '<div class="empty">' + I18N[LANG].empty_arrangement + '</div>'; return; } const dateOrder = []; const dateMap = new Map(); const visibleArrangement = isAdminUnlocked() ? ARRANGEMENT : ARRANGEMENT.filter(r => !isFutureDateHeader(r.date_header)); visibleArrangement.forEach(r => { if (!dateMap.has(r.date_header)) { dateMap.set(r.date_header, { title: r.title, rows: [] }); dateOrder.push(r.date_header); } dateMap.get(r.date_header).rows.push(r); }); body.innerHTML = dateOrder.map(dateKey => { const grp = dateMap.get(dateKey); const rows = grp.rows; const cols = []; rows.forEach(r => { const ct0 = (r.col_type || '').toLowerCase(); if (ct0 !== 'rest' && ct0 !== 'lunch' && r.col_label && cols.indexOf(r.col_label) === -1) cols.push(r.col_label); }); const slotOrder = []; rows.forEach(r => { if (slotOrder.indexOf(r.time_slot) === -1) slotOrder.push(r.time_slot); }); const assessorMap = {}; rows.filter(r => r.time_slot === 'Assessor').forEach(r => { assessorMap[r.col_label] = r.name; }); const nameHtml = val => val ? val.split('|').map(s => escapeHtml(s.trim())).join('<br>') : ''; const bodyRows = slotOrder.filter(s => s !== 'Assessor').map(slot => { const slotRows = rows.filter(r => r.time_slot === slot); const restRow = slotRows.find(r => { const ct1 = (r.col_type || '').toLowerCase(); return ct1 === 'rest' || ct1 === 'lunch'; }); if (restRow) { const ct2 = (restRow.col_type || '').toLowerCase(); const cls2 = ct2 === 'lunch' ? 'arr-lunch' : 'arr-rest'; const lbl2 = restRow.name || (ct2 === 'lunch' ? 'Lunch' : 'Rest'); return '<tr><td class="arr-time">' + escapeHtml(slot) + '</td><td class="' + cls2 + '" colspan="' + cols.length + '">' + escapeHtml(lbl2) + '</td></tr>'; } const nameCells = cols.map(c => { const match = slotRows.find(r => r.col_label === c); const val = match ? match.name : ''; return '<td' + (val ? '' : ' class="arr-empty"') + '>' + nameHtml(val) + '</td>'; }).join(''); let out = '<tr><td class="arr-time">' + escapeHtml(slot) + '</td>' + nameCells + '</tr>'; if (slotRows.some(r => r.subject)) { const subjCells = cols.map(c => { const match = slotRows.find(r => r.col_label === c); return '<td class="arr-subject">' + (match && match.subject ? escapeHtml(match.subject) : '') + '</td>'; }).join(''); out += '<tr class="arr-subject-row"><td class="arr-time arr-subject-label">' + I18N[LANG].arrangement_subject + '</td>' + subjCells + '</tr>'; } return out; }).join(''); const headerCells = cols.map(c => '<th>' + escapeHtml(c) + '</th>').join(''); const assessorCells = cols.map(c => '<td class="arr-assessor">' + (assessorMap[c] ? escapeHtml(assessorMap[c]) : '') + '</td>').join(''); const titleHtml = grp.title ? '<div class="meta">' + escapeHtml(grp.title) + '</div>' : ''; return '<div class="exam-card arr-card"><div class="exam-card-head"><div class="exam-icon">🗂️</div><div class="exam-title-wrap"><h3>' + escapeHtml(dateKey) + '</h3>' + titleHtml + '</div></div><div class="arr-table-wrap"><table class="arr-table"><thead><tr><th></th>' + headerCells + '</tr><tr class="arr-assessor-row"><td class="arr-time">' + I18N[LANG].arrangement_assessor + '</td>' + assessorCells + '</tr></thead><tbody>' + bodyRows + '</tbody></table></div></div>'; }).join(''); } // ---------- Mentors / Roster ----------
 const rosterCohortSelect = document.getElementById('rosterCohortSelect');
 let rosterCohortNames = [];
 
@@ -2433,7 +2713,7 @@ function populateRosterCohortSelect() {
   }
   const maxIdx = Math.max(...map.values());
   let names = [...map.keys()].sort((a, b) => map.get(b) - map.get(a)); // most recent first
-  if (!isTrainerUnlocked()) {
+  if (!isAdminUnlocked()) {
     names = names.filter(n => map.get(n) === maxIdx);
   }
   rosterCohortNames = names;
@@ -3668,6 +3948,14 @@ async function init() {
   renderRanking();
   renderDashboard();
   applyLanguage();
+  if (typeof applyRoleRestrictions === 'function') applyRoleRestrictions();
+  if (currentRole() === 'subject') {
+    activatePanel('exams');
+    document.querySelectorAll('#examsSubNav button').forEach(b => b.classList.toggle('active', b.dataset.subtab === 'arrangement'));
+    document.querySelectorAll('.exams-subview').forEach(v => v.classList.remove('active'));
+    const arrView = document.getElementById('examsArrangementView');
+    if (arrView) arrView.classList.add('active');
+  }
 }
 init();
 </script>
