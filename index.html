@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-title" content="URAC Training">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --gold: #e2a530;
@@ -28,6 +28,8 @@
     --green: #7ea672;
     --amber: #d99a2b;
     --red: #d1495b;
+    --maroon: #7c1f3d;
+    --maroon-light: #f7e9ee;
   }
   * { box-sizing: border-box; }
   body {
@@ -888,6 +890,97 @@
   body.subject-mode #panel-exams { display: block !important; }
   body.subject-mode #examsScheduleView { display: none !important; }
   body.subject-mode #examsArrangementView { display: block !important; }
+
+  /* ---- Redesigned Schedule tab: "programme sheet" list style ---- */
+  .sched-header {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    flex-wrap: wrap; gap: 10px; margin: 4px 0 22px;
+  }
+  .sched-eyebrow {
+    font-size: 0.72rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--maroon); margin: 0 0 6px;
+  }
+  .sched-heading {
+    font-family: "Playfair Display", Georgia, serif; font-weight: 700;
+    font-size: 2.15rem; line-height: 1.1; color: #262220; margin: 0;
+  }
+  .sched-count { font-size: 0.85rem; color: var(--muted); white-space: nowrap; padding-bottom: 4px; }
+  .sched-week-heading {
+    font-size: 0.72rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--maroon); margin: 26px 2px 10px;
+  }
+  .sched-week-heading:first-child { margin-top: 0; }
+  .sched-day-card {
+    display: flex; background: var(--card); border: 1px solid var(--border);
+    border-radius: 22px; overflow: hidden; margin-bottom: 18px;
+    box-shadow: 0 3px 12px rgba(124,31,61,0.05);
+  }
+  .sched-date-rail {
+    flex: 0 0 110px; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; text-align: center; gap: 2px;
+    background: var(--maroon-light); border-right: 1px solid var(--border); padding: 18px 10px;
+  }
+  .sched-weekday {
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--maroon);
+  }
+  .sched-daynum {
+    font-family: "Playfair Display", Georgia, serif; font-weight: 700;
+    font-size: 2.5rem; line-height: 1.05; color: #262220;
+  }
+  .sched-daynum.is-range { font-size: 1.7rem; }
+  .sched-weekday.is-range-caption { font-size: 0.62rem; letter-spacing: 0.06em; }
+  .sched-month {
+    font-size: 0.66rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  /* One accent colour per weekday, so the eye can pick out e.g. every
+     Saturday at a glance while scanning a long list of day cards. */
+  .sched-date-rail[data-weekday="mon"] { background: #eaf1fb; }
+  .sched-date-rail[data-weekday="mon"] .sched-weekday { color: #2f5f8f; }
+  .sched-date-rail[data-weekday="tue"] { background: #eafaf1; }
+  .sched-date-rail[data-weekday="tue"] .sched-weekday { color: #1f7a53; }
+  .sched-date-rail[data-weekday="wed"] { background: #fdf6e0; }
+  .sched-date-rail[data-weekday="wed"] .sched-weekday { color: #9c7a12; }
+  .sched-date-rail[data-weekday="thu"] { background: #fdece3; }
+  .sched-date-rail[data-weekday="thu"] .sched-weekday { color: #b1552b; }
+  .sched-date-rail[data-weekday="fri"] { background: #f7e9ee; }
+  .sched-date-rail[data-weekday="fri"] .sched-weekday { color: #7c1f3d; }
+  .sched-date-rail[data-weekday="sat"] { background: #f1eafc; }
+  .sched-date-rail[data-weekday="sat"] .sched-weekday { color: #6b3fa0; }
+  .sched-date-rail[data-weekday="sun"] { background: #fdeaea; }
+  .sched-date-rail[data-weekday="sun"] .sched-weekday { color: #a83232; }
+  .sched-sessions { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+  .sched-session-row {
+    display: flex; align-items: center; gap: 20px; padding: 18px 22px; border-top: 1px solid var(--border);
+  }
+  .sched-session-row:first-child { border-top: none; }
+  .sched-session-row.is-assessment { background: #fdecec; }
+  .sched-session-time {
+    flex: 0 0 118px; font-size: 0.86rem; font-weight: 600; color: #3a332c;
+  }
+  .sched-session-body { flex: 1; min-width: 0; }
+  .sched-session-title-row { display: flex; align-items: center; gap: 9px; }
+  .sched-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--maroon); flex: 0 0 auto;
+  }
+  .sched-session-title { font-weight: 700; font-size: 1.02rem; color: #201c1a; }
+  .sched-session-meta { margin: 6px 0 0 17px; font-size: 0.82rem; color: var(--muted); }
+  .sched-session-note {
+    display: inline-block; margin: 8px 0 0 17px; font-size: 0.72rem; font-weight: 700;
+    color: var(--maroon); background: var(--maroon-light); padding: 3px 9px; border-radius: 999px;
+  }
+  @media (max-width: 560px) {
+    .sched-day-card { flex-direction: column; }
+    .sched-date-rail {
+      flex-direction: row; justify-content: flex-start; gap: 8px; padding: 12px 18px;
+      border-right: none; border-bottom: 1px solid var(--border);
+    }
+    .sched-daynum { font-size: 1.5rem; }
+    .sched-session-row { flex-direction: column; align-items: stretch; gap: 6px; }
+    .sched-session-time { flex: none; }
+    .sched-session-meta, .sched-session-note { margin-left: 17px; }
+  }
 </style>
 </head>
 <body>
@@ -1129,14 +1222,7 @@
   </section>
 
   <section id="panel-calendar" class="panel">
-    <h1 class="page-title" data-i18n="tab_calendar_full">Schedule</h1>
-    <div class="welcome-card">
-      <div class="welcome-icon icon-amber">📅</div>
-      <div>
-        <h2 data-i18n="schedule_title">Training Schedule</h2>
-        <p class="embed-hint" data-i18n="schedule_hint">Browse each cohort's day-by-day sessions and timings.</p>
-      </div>
-    </div>
+    <div id="schedHeader"></div>
     <div class="toolbar">
       <select id="cohortSelect"></select>
       <input type="text" id="calSearch" placeholder="Search topic, trainer... 搜索">
@@ -2070,6 +2156,58 @@ function statusBadge(dateIso) {
   return '';
 }
 
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+// Turns a phase word found in the week label ("FIRST WEEK", "THIRD WEEK", ...)
+// into the short mode/location tag shown on each session row -- Zoom for the
+// remote week, the physical venue (falls back to "Onsite") for the on-site
+// weeks, and "Clinic" for the clinic-attachment week.
+function weekPhaseLabel(week) {
+  const w = (week || '').toLowerCase();
+  if (/\bfirst\b/.test(w)) return 'Zoom';
+  if (/\bsecond\b/.test(w) || /\bthird\b/.test(w)) return 'Onsite';
+  if (/\bfor(th|urth)\b/.test(w)) return 'Clinic';
+  return '';
+}
+
+// The sheet writes every topic in SHOUTING CAPS ("ZOOM ORIENTATION", "UR
+// MUST KNOW & ISO BRIEFING"). Title-cased reads far more like a printed
+// programme, so this lower-cases then capitalises each word for display --
+// except acronyms/initialisms the sheet actually relies on staying
+// recognisable (ISO, UV, DISC, HQ, role codes, place names), which are kept
+// fully upper-case instead of being flattened to "Iso"/"Uv"/etc. Only the
+// on-screen label changes; the underlying topic text/search index is
+// untouched.
+const KNOWN_ACRONYMS = new Set(['UR','URAC','UV','ISO','DISC','AI','POS','HQ','SRW','JB','KL','PG','VPO','LPO','LOO','AM','AAM','PM','CEO','COO','CTO','CPO']);
+function titleCaseTopic(str) {
+  return (str || '').split(/(\s+)/).map(tok => {
+    if (!tok || /^\s+$/.test(tok)) return tok;
+    const bareUpper = tok.replace(/[^A-Za-z]/g, '').toUpperCase();
+    if (bareUpper && KNOWN_ACRONYMS.has(bareUpper)) return tok.toUpperCase();
+    return tok.replace(/[A-Za-z]+/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+  }).join('');
+}
+
+// Turns a raw trainer credit off the sheet (e.g. "LPO DR LIM JIA YING(JEM)",
+// "CEO DR FONG TJ", "DR.LIM WEN XUAN") into a readable "Role — Name" line:
+// splits off a leading role/title token if present, title-cases the rest of
+// the name, and spaces out a trailing "(NICKNAME)" parenthetical so it reads
+// naturally instead of shouting in sheet-style caps.
+const ROLE_PREFIX_RE = /^(CEO|COO|CTO|CPO|LPO|VPO|LOO|AM|AAM|CONSULTANT|THERAPIST|MENTOR|ASSESSOR)\b\.?\s*/i;
+function formatTrainerCredit(raw) {
+  const trimmed = (raw || '').trim();
+  if (!trimmed) return '';
+  const roleMatch = trimmed.match(ROLE_PREFIX_RE);
+  const role = roleMatch ? roleMatch[1].toUpperCase() : '';
+  const rest = (roleMatch ? trimmed.slice(roleMatch[0].length) : trimmed).trim();
+  const titleCased = rest
+    .toLowerCase()
+    .replace(/\b\w/g, c => c.toUpperCase())
+    .replace(/\.\s*/g, '. ')
+    .trim();
+  return role ? `${role} — ${titleCased}` : titleCased;
+}
+
 function renderCalendar() {
   const cohort = cohortSelect.value;
   const search = document.getElementById('calSearch').value.trim().toLowerCase();
@@ -2081,18 +2219,22 @@ function renderCalendar() {
   body.innerHTML = '';
 
   // group by week, then by day_label+date
-  let currentWeek = null;
   let dayMap = new Map();
   let order = [];
 
   // Most rows carry the weekday ("Mon", "Tues", ...) in their own dedicated
-  // column, which is what powers the coloured weekday pill at the top of
-  // each day card. Some weeks' rows instead leave that column blank and
-  // record the weekday as a standalone placeholder row (no time slot) whose
-  // Activity cell just says "Wed" or "Thurs" -- caught below so it fills in
-  // the day's weekday pill instead of showing up as a bogus lesson entry at
-  // the bottom of the card.
+  // column, which is what powers the day rail at the left of each day card.
+  // Some weeks' rows instead leave that column blank and record the weekday
+  // as a standalone placeholder row (no time slot) whose Activity cell just
+  // says "Wed" or "Thurs" -- caught below so it fills in the day's weekday
+  // label instead of showing up as a bogus lesson entry at the bottom of
+  // the card.
   const WEEKDAY_WORD_RE = /^(mon|monday|tue|tues|tuesday|wed|wednesday|thu|thur|thurs|thursday|fri|friday|sat|saturday|sun|sunday)$/i;
+  // A few rows instead give a weekday *range* as their whole activity cell
+  // (e.g. "Mon - Fri", marking which days a recurring block like "Clinic
+  // Attachment" runs on). That belongs on the date rail as a caption, not as
+  // its own bogus session row.
+  const WEEKDAY_RANGE_RE = /^(mon|tue|wed|thu|fri|sat|sun)[a-z]*\s*-\s*(mon|tue|wed|thu|fri|sat|sun)[a-z]*$/i;
 
   rows.forEach(r => {
     if (search) {
@@ -2101,7 +2243,11 @@ function renderCalendar() {
     }
     const key = r.week + '|' + r.day_label + '|' + r.date;
     if (!dayMap.has(key)) {
-      dayMap.set(key, { week: r.week, day_label: r.day_label, date: r.date, date_iso: r.date_iso, weekday: '', slots: [] });
+      // The live sheet doesn't always fill in the date_iso column (the
+      // newest/current cohort in particular leaves it blank), so fall back
+      // to parsing it out of the free-text "date" cell -- this is the same
+      // helper isCohortPast/isCohortFuture already rely on for that reason.
+      dayMap.set(key, { week: r.week, day_label: r.day_label, date: r.date, date_iso: r.date_iso || dateIsoFromCalRow(r), weekday: '', weekdayRange: '', slots: [] });
       order.push(key);
     }
     const entry = dayMap.get(key);
@@ -2111,89 +2257,151 @@ function renderCalendar() {
       entry.weekday = trimmedActivity;
       return; // placeholder row only -- not a real lesson slot
     }
+    if (!r.time_slot && !entry.weekdayRange && WEEKDAY_RANGE_RE.test(trimmedActivity)) {
+      entry.weekdayRange = trimmedActivity;
+      return; // placeholder row only -- not a real lesson slot
+    }
     entry.slots.push(r);
   });
+
+  // Some weeks (typically the final "clinic attachment" week) are entered in
+  // the sheet as one row spanning a date range (e.g. "DAY 21-25", covering
+  // Mon-Fri) immediately followed by a single extra day with a near-identical
+  // recurring schedule (e.g. the following Saturday). Shown as two separate
+  // cards this reads as duplicated content, so fold the very next day's
+  // slots into the range card -- skipping any slot that's an exact repeat of
+  // one already in the range -- and stretch the range card's date-rail to
+  // cover both.
+  const RANGE_LABEL_RE = /^DAY\s*\d+\s*-\s*\d+$/i;
+  const mergedOrder = [];
+  for (let i = 0; i < order.length; i++) {
+    const key = order[i];
+    const day = dayMap.get(key);
+    if (RANGE_LABEL_RE.test((day.day_label || '').trim()) && i + 1 < order.length) {
+      const nextKey = order[i + 1];
+      const nextDay = dayMap.get(nextKey);
+      if (nextDay.week === day.week) {
+        const seen = new Set(day.slots.map(s => (s.time_slot || '') + '|' + (s.activity || '')));
+        nextDay.slots.forEach(s => {
+          const sig = (s.time_slot || '') + '|' + (s.activity || '');
+          if (!seen.has(sig)) { day.slots.push(s); seen.add(sig); }
+        });
+        if (nextDay.date_iso) day.rangeEndIso = nextDay.date_iso;
+        i++; // fold the next entry into this card instead of rendering it separately
+      }
+    }
+    mergedOrder.push(key);
+  }
+  order = mergedOrder;
+
+  // Header: "FULL PROGRAMME" eyebrow + a serif "<Month> schedule" heading
+  // (taken from the first visible day's date) + a running count of how many
+  // individual sessions are shown after the search filter, mirroring a
+  // printed programme sheet rather than the old card-grid look.
+  const header = document.getElementById('schedHeader');
+  const firstDay = order.length ? dayMap.get(order[0]) : null;
+  const monthName = firstDay && firstDay.date_iso ? MONTH_NAMES[parseInt(firstDay.date_iso.slice(5, 7), 10) - 1] : '';
+  const totalSessions = order.reduce((n, key) => n + dayMap.get(key).slots.length, 0);
+  header.innerHTML = `
+    <div class="sched-header">
+      <div>
+        <p class="sched-eyebrow">Full Programme</p>
+        <h1 class="sched-heading">${escapeHtml(monthName ? monthName + ' schedule' : 'Schedule')}</h1>
+      </div>
+      <div class="sched-count">${totalSessions} session${totalSessions === 1 ? '' : 's'} shown</div>
+    </div>
+  `;
 
   if (order.length === 0) {
     body.innerHTML = `<div class="empty">${I18N[LANG].empty_calendar}</div>`;
     return;
   }
 
-  // Days belonging to the same "week" group are laid out side by side in a
-  // Monday-Sunday style grid (like a weekly planner), one .week-grid row per
-  // week, instead of one long vertical stack of day cards.
   let lastWeek = null;
-  let gridEl = null;
   order.forEach(key => {
     const day = dayMap.get(key);
     if (day.week !== lastWeek) {
       const h = document.createElement('div');
-      h.className = 'week-heading';
-      h.innerHTML = '🗓️ ' + escapeHtml(weekDisplayLabel(day.week)) + ' ' + weekIcon(day.week);
+      h.className = 'sched-week-heading';
+      h.innerHTML = escapeHtml(weekDisplayLabel(day.week));
       body.appendChild(h);
-      gridEl = document.createElement('div');
-      gridEl.className = 'week-grid';
-      body.appendChild(gridEl);
       lastWeek = day.week;
     }
     const card = document.createElement('div');
-    card.className = 'day-card wd-' + weekdayClass(day.weekday);
-    const badge = statusBadge(day.date_iso);
-    // A day's "date" cell sometimes carries an extra annotation on a second
-    // line (e.g. a date followed by "Management Meeting") -- split that off
-    // into its own small badge instead of running it straight into the date text.
-    // Internal HR/admin-only meeting notes ("Management Meeting", "Finance
-    // Meeting") aren't relevant to trainees' own schedule, so they're
-    // filtered out here rather than shown as a badge on the card.
-    const dateLines = (day.date || '').split(String.fromCharCode(10)).map(s => s.trim()).filter(Boolean);
-    const dateMain = dateLines[0] || '';
-    const dateNotes = dateLines.slice(1).filter(n => !/management meeting|finance meeting/i.test(n));
+    card.className = 'sched-day-card';
 
     // Slots aren't always entered into the sheet in chronological order, so
     // sort them by start time before rendering (e.g. "2pm-4pm" should render
     // above "4pm-6pm" even if it was typed in second).
     const sortedSlots = day.slots.slice().sort((a, b) => timeSlotMinutes(a.time_slot) - timeSlotMinutes(b.time_slot));
-
-    // Each slot shows its own trainer(s) directly underneath its topic,
-    // right where that lesson lives, instead of grouping every trainer for
-    // the day into one shared block at the bottom of the card.
     const parsedSlots = sortedSlots.map(s => ({ slot: s, parsed: parseSlot(s) }));
-    // The venue (e.g. "UR KLINIK BM") is really a property of the whole day's
-    // onsite location, not just the Morning Meeting slot it happens to be
-    // written on -- shown once up in the card header instead of buried
-    // inside that one slot, so it's the first thing trainees see.
-    const dayVenueEntry = parsedSlots.find(({ parsed }) => parsed.venue);
-    const dayVenue = dayVenueEntry ? dayVenueEntry.parsed.venue : '';
-    const slotRows = parsedSlots.map(({ slot: s, parsed }) => {
+    const phase = weekPhaseLabel(day.week);
+
+    const sessionRows = parsedSlots.map(({ slot: s, parsed }) => {
       const isAssessment = /assessment/i.test(parsed.topic);
-      const slotTrainers = parsed.trainers.length ? `
-        <div class="day-trainers">
-          ${parsed.trainers.map(t => `<span class="activity-trainer">🧑‍🏫 ${escapeHtml(t)}</span>`).join('')}
-        </div>` : '';
+      // "Travel", "Offday" and "Submit Logbook" aren't real lessons, so the
+      // Zoom/Onsite/Clinic phase tag next to them is just noise -- leave
+      // their meta line blank (or venue-only, if the sheet named one) instead.
+      const topicLower = (parsed.topic || '').trim().toLowerCase();
+      const suppressPhase = topicLower === 'travel' || topicLower === 'offday' || topicLower === 'submit logbook';
+      // Mode/location tag: the slot's own venue if it names one (onsite
+      // days), otherwise the week's phase (Zoom / Onsite / Clinic).
+      const mode = parsed.venue || (suppressPhase ? '' : phase);
+      const credits = parsed.trainers.map(formatTrainerCredit).filter(Boolean).join(', ');
+      const metaParts = [mode, credits].filter(Boolean);
       return `
-        <div class="day-slot-row${isAssessment ? ' is-assessment' : ''}">
-          ${s.time_slot ? `<span class="day-slot-time">${escapeHtml(s.time_slot)}</span>` : ''}
-          ${parsed.topic ? `<div class="day-slot-topic${isAssessment ? ' is-assessment-topic' : ''}">${isAssessment ? '📌 ' : ''}${escapeHtml(parsed.topic)}</div>` : ''}
-          ${slotTrainers}
+        <div class="sched-session-row${isAssessment ? ' is-assessment' : ''}">
+          <div class="sched-session-time">${s.time_slot ? escapeHtml(s.time_slot) : ''}</div>
+          <div class="sched-session-body">
+            <div class="sched-session-title-row">
+              <span class="sched-dot"></span>
+              <span class="sched-session-title">${escapeHtml(titleCaseTopic(parsed.topic) || day.day_label || '')}</span>
+            </div>
+            ${metaParts.length ? `<div class="sched-session-meta">${escapeHtml(metaParts.join(' · '))}</div>` : ''}
+            ${isAssessment ? `<span class="sched-session-note">📌 Assessment</span>` : ''}
+          </div>
         </div>`;
     }).join('');
 
+    const dayMonthName = day.date_iso ? MONTH_NAMES[parseInt(day.date_iso.slice(5, 7), 10) - 1] : monthName;
+    // A merged range card (see above) has no single weekday and spans two
+    // day-numbers -- show "26–31" instead of a single number in that case.
+    const dayNumDisplay = day.date_iso
+      ? (day.rangeEndIso
+          ? `${parseInt(day.date_iso.slice(8, 10), 10)}–${parseInt(day.rangeEndIso.slice(8, 10), 10)}`
+          : String(parseInt(day.date_iso.slice(8, 10), 10)))
+      : '';
+    // A caption like "MON-FRI" goes on the rail itself (in place of a single
+    // weekday abbreviation) when the sheet recorded one for this day/range,
+    // rather than as its own bogus session row.
+    const weekdayCaption = day.weekdayRange
+      ? escapeHtml(day.weekdayRange.toUpperCase())
+      : escapeHtml(day.rangeEndIso ? '' : (day.weekday || '').slice(0, 3));
+    const wKey = weekdayKey(day.weekday);
     card.innerHTML = `
-      <div class="day-card-head">
-        <span class="day-weekday-pill">${escapeHtml(day.weekday || '')}</span>
-        <div class="day-head-main">
-          <div class="day-title">${escapeHtml(day.day_label || '')} ${badge}</div>
-          <div class="day-sub">
-            ${escapeHtml(dateMain)}
-            ${dateNotes.map(n => `<span class="day-note-pill">📌 ${escapeHtml(n)}</span>`).join('')}
-            ${dayVenue ? `<span class="day-note-pill venue">📍 ${escapeHtml(dayVenue)}</span>` : ''}
-          </div>
-        </div>
+      <div class="sched-date-rail"${wKey ? ` data-weekday="${wKey}"` : ''}>
+        <div class="sched-weekday${day.weekdayRange ? ' is-range-caption' : ''}">${weekdayCaption}</div>
+        <div class="sched-daynum${day.rangeEndIso ? ' is-range' : ''}">${escapeHtml(dayNumDisplay)}</div>
+        <div class="sched-month">${escapeHtml(dayMonthName ? dayMonthName.slice(0, 3) : '')}</div>
       </div>
-      <div class="day-card-body">${slotRows}</div>
+      <div class="sched-sessions">${sessionRows}</div>
     `;
-    gridEl.appendChild(card);
+    body.appendChild(card);
   });
+}
+
+// Normalizes the sheet's various weekday spellings ("Tues", "Thurs", "Sat", ...)
+// down to a short key used to color-code each day card's rail.
+function weekdayKey(w) {
+  const s = (w || '').trim().toLowerCase();
+  if (s.startsWith('mon')) return 'mon';
+  if (s.startsWith('tue')) return 'tue';
+  if (s.startsWith('wed')) return 'wed';
+  if (s.startsWith('thu')) return 'thu';
+  if (s.startsWith('fri')) return 'fri';
+  if (s.startsWith('sat')) return 'sat';
+  if (s.startsWith('sun')) return 'sun';
+  return '';
 }
 
 // Picks a small icon to show beside a week's heading based on which phase of
@@ -2325,9 +2533,17 @@ function parseSlot(s) {
   // glance, instead of being buried inside the topic paragraph.
   let venue = '';
   if (topicLines.length) {
-    const venueMatch = topicLines[topicLines.length - 1].match(/^\(?\s*(UR KLINIK[^)]*)\)?\s*$/i);
+    const lastLine = topicLines[topicLines.length - 1];
+    const venueMatch = lastLine.match(/^\(?\s*(UR KLINIK[^)]*)\)?\s*$/i);
+    // A trailing "(HQ) 330PM"-style line names the HQ venue, with a stray
+    // time note tacked on that's already shown in the session's own time
+    // column -- drop the whole line rather than leaving "330Pm" in the topic.
+    const hqMatch = lastLine.match(/^\(\s*HQ\s*\)/i);
     if (venueMatch) {
       venue = venueMatch[1].trim();
+      topicLines.pop();
+    } else if (hqMatch) {
+      venue = 'UR HQ';
       topicLines.pop();
     }
   }
