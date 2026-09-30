@@ -2473,6 +2473,16 @@ function timeSlotMinutes(str) {
 // Both get split apart here so trainers can be rendered separately from the
 // topic, rather than squashed into one run-on line with it.
 const TRAINER_LINE_RE = /^(DR\.?|CEO|COO|LPO|AM|AAM|CONSULTANT|THERAPIST|MENTOR|ASSESSOR)\b/i;
+// The same trainer name is sometimes spelled slightly differently between the
+// sheet's "trainers" column and the free-text credit line baked into the
+// activity cell (e.g. "DR LIM JIA YING(JEMIMAH)" vs "DR LIM JIA YING
+// (JEMIMAH)" -- a missing space before the bracket). Comparing names for the
+// dedup check below needs to ignore that kind of whitespace noise, or the
+// duplicate line never gets recognized and the trainer's name ends up baked
+// into the visible topic as well as shown in its own credit line.
+function normName(s) {
+  return (s || '').toLowerCase().replace(/\s+/g, ' ').replace(/\s*([([])\s*/g, '$1').trim();
+}
 function parseSlot(s) {
   const raw = s.activity || '';
   const blocks = raw.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
@@ -2509,7 +2519,7 @@ function parseSlot(s) {
     // to the role-title regex here: a lesson topic can legitimately start
     // with a word like "Therapist" (e.g. "THERAPIST TARGETING SKILLS"), and
     // matching on that alone would wrongly eat real topic text.
-    while (topicLines.length && trainers.some(t => t.toLowerCase() === topicLines[topicLines.length - 1].toLowerCase())) {
+    while (topicLines.length && trainers.some(t => normName(t) === normName(topicLines[topicLines.length - 1]))) {
       topicLines.pop();
     }
   } else {
@@ -2519,10 +2529,10 @@ function parseSlot(s) {
     // which is presumed to be the real topic).
     while (topicLines.length > 1 && (
       TRAINER_LINE_RE.test(topicLines[topicLines.length - 1]) ||
-      trainers.some(t => t.toLowerCase() === topicLines[topicLines.length - 1].toLowerCase())
+      trainers.some(t => normName(t) === normName(topicLines[topicLines.length - 1]))
     )) {
       const popped = topicLines.pop();
-      if (!trainers.some(t => t.toLowerCase() === popped.toLowerCase())) trainers.unshift(popped);
+      if (!trainers.some(t => normName(t) === normName(popped))) trainers.unshift(popped);
     }
   }
   // Some slots (usually the recurring "Each Outlet Morning Meeting") name a
