@@ -2535,26 +2535,44 @@ function parseSlot(s) {
       if (!trainers.some(t => normName(t) === normName(popped))) trainers.unshift(popped);
     }
   }
-  // Some slots (usually the recurring "Each Outlet Morning Meeting") name a
-  // specific training venue -- written either as a trailing "(UR KLINIK BM)"
-  // line under the topic, or as the entire activity cell on its own (just
-  // "UR KLINIK GL", no topic text at all). Pull that out into its own
-  // `venue` field so it can be shown as a badge trainees can spot at a
-  // glance, instead of being buried inside the topic paragraph.
-  let venue = '';
-  if (topicLines.length) {
-    const lastLine = topicLines[topicLines.length - 1];
-    const venueMatch = lastLine.match(/^\(?\s*(UR KLINIK[^)]*)\)?\s*$/i);
-    // A trailing "(HQ) 330PM"-style line names the HQ venue, with a stray
-    // time note tacked on that's already shown in the session's own time
-    // column -- drop the whole line rather than leaving "330Pm" in the topic.
-    const hqMatch = lastLine.match(/^\(\s*HQ\s*\)/i);
-    if (venueMatch) {
-      venue = venueMatch[1].trim();
-      topicLines.pop();
-    } else if (hqMatch) {
-      venue = 'UR HQ';
-      topicLines.pop();
+  // Preferred path: the Calendar sheet has an explicit "venue" column, same
+  // idea as the "trainers" column above -- so the training location doesn't
+  // have to be guessed out of the free-text activity cell at all. Whoever
+  // maintains the sheet just fills this in per row and it shows up here
+  // automatically, no code change or message to Claude needed.
+  let venue = (s.venue || s.Venue || '').trim();
+  if (venue) {
+    // The activity cell sometimes still carries the same venue as its own
+    // trailing line (old habit, or copy-pasted from a previous row) -- drop
+    // it so it doesn't show up twice.
+    if (topicLines.length) {
+      const lastLine = topicLines[topicLines.length - 1];
+      const looksLikeVenueLine = /^\(?\s*(UR KLINIK[^)]*|HQ)\)?\s*(\d{1,4}\s*[ap]m)?\s*$/i.test(lastLine);
+      if (looksLikeVenueLine || normName(lastLine) === normName(venue)) {
+        topicLines.pop();
+      }
+    }
+  } else {
+    // Fallback: no explicit venue column (older rows, or a cohort whose
+    // sheet hasn't added it yet) -- same regex-based extraction as before.
+    // Usually the recurring "Each Outlet Morning Meeting" names a specific
+    // training venue -- written either as a trailing "(UR KLINIK BM)" line
+    // under the topic, or as the entire activity cell on its own (just
+    // "UR KLINIK GL", no topic text at all).
+    if (topicLines.length) {
+      const lastLine = topicLines[topicLines.length - 1];
+      const venueMatch = lastLine.match(/^\(?\s*(UR KLINIK[^)]*)\)?\s*$/i);
+      // A trailing "(HQ) 330PM"-style line names the HQ venue, with a stray
+      // time note tacked on that's already shown in the session's own time
+      // column -- drop the whole line rather than leaving "330Pm" in the topic.
+      const hqMatch = lastLine.match(/^\(\s*HQ\s*\)/i);
+      if (venueMatch) {
+        venue = venueMatch[1].trim();
+        topicLines.pop();
+      } else if (hqMatch) {
+        venue = 'UR HQ';
+        topicLines.pop();
+      }
     }
   }
   let topic = topicLines.join('\n');
