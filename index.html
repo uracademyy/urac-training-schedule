@@ -2669,7 +2669,7 @@ function renderDashboard() {
   );
 
   const todayRows = (CALENDAR[currentCohortName] || []).filter(
-    r => r.date_iso === todayIso && r.activity && !/lunch|break/i.test(r.activity)
+    r => dateIsoFromCalRow(r) === todayIso && r.activity && !/lunch|break/i.test(r.activity)
   );
 
   let nextExamDate = null;
@@ -4069,7 +4069,7 @@ function answerQuestion(qRaw) {
   // ----- Today's schedule -----
   if (/today|今天/.test(q)) {
     const todayIso = TODAY.getFullYear() + '-' + String(TODAY.getMonth() + 1).padStart(2, '0') + '-' + String(TODAY.getDate()).padStart(2, '0');
-    const rows = (CALENDAR[currentCohortName] || []).filter(r => r.date_iso === todayIso && r.activity && !/lunch|break/i.test(r.activity));
+    const rows = (CALENDAR[currentCohortName] || []).filter(r => dateIsoFromCalRow(r) === todayIso && r.activity && !/lunch|break/i.test(r.activity));
     if (!rows.length) return t.ask_ans_today_none;
     const header = t.ask_ans_today_header.replace('{n}', rows.length);
     const lines = rows.map(r => '• ' + (r.time_slot ? r.time_slot + ' ' : '') + r.activity.split('\n')[0]);
