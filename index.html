@@ -1875,13 +1875,20 @@ function applyRoleRestrictions() {
   const submitBtn = document.getElementById('siteGateSubmitBtn');
   const errorEl = document.getElementById('siteGateError');
   if (!input || !submitBtn || !errorEl) return;
+  // Subject role needs no password: hide the box and let them straight in.
+  function syncGateInput() {
+    input.style.display = roleSelect.value === 'subject' ? 'none' : '';
+    errorEl.style.display = 'none';
+  }
+  roleSelect.addEventListener('change', syncGateInput);
+  syncGateInput();
   submitBtn.addEventListener('click', () => {
     const role = roleSelect.value;
     const val = input.value.trim();
     submitBtn.disabled = true;
     Promise.resolve(remoteConfigReady).then(function () {
       submitBtn.disabled = false;
-      if (val === getRolePasswords()[role]) {
+      if (role === 'subject' || val === getRolePasswords()[role]) {
         try { localStorage.setItem(SITE_GATE_STORAGE_KEY, role); } catch (e) {}
         errorEl.style.display = 'none';
         applyRoleRestrictions();
