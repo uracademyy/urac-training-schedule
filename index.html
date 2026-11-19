@@ -2138,6 +2138,10 @@ function populateCohortSelect() {
   });
   if (!isAdminUnlocked()) {
     names = names.filter(n => n.toLowerCase().includes('current') || (!isCohortPast(n) && !isCohortFuture(n)));
+    // If the sheet still has an older "(current)" cohort next to a newer one,
+    // trainees only get the newest.
+    const newest = latestCurrentCohort(names);
+    names = names.filter(n => !n.toLowerCase().includes('current') || n === newest);
   }
   cohortNames = names.length ? names : Object.keys(CALENDAR).slice(0, 1);
   cohortNames.forEach(name => {
@@ -2609,6 +2613,19 @@ function parseDateFromHeader(str) {
 }
 
 let currentCohortName = null;
+
+// Of the cohorts marked "(current)", returns the one that starts latest (so a
+// newly added Dec cohort wins over a finished Oct one still tagged current).
+function latestCurrentCohort(names) {
+  let best = null, bestStart = '';
+  (names || []).forEach(n => {
+    if (!n.toLowerCase().includes('current')) return;
+    const ds = (CALENDAR[n] || []).map(dateIsoFromCalRow).filter(Boolean).sort();
+    const start = ds[0] || '';
+    if (best === null || start > bestStart) { best = n; bestStart = start; }
+  });
+  return best;
+}
 
 // Strips the internal "Cohort - " prefix and "Cohort" wording from a raw
 // Calendar cohort key (e.g. "Cohort - Aug 2026 (current)") so trainees just
@@ -4190,7 +4207,7 @@ async function init() {
   populateCohortSelect();
   populateRosterCohortSelect();
   updateTrainerViewBtn();
-  currentCohortName = cohortNames.find(n => n.toLowerCase().includes('current')) || cohortNames[0];
+  currentCohortName = latestCurrentCohort(cohortNames) || cohortNames[0];
   renderCalendar();
   renderExams();renderArrangement();
   renderMentors();
