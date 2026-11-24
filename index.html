@@ -2497,6 +2497,14 @@ const TRAINER_LINE_RE = /^(DR\.?|CEO|COO|LPO|AM|AAM|CONSULTANT|THERAPIST|MENTOR|
 function normName(s) {
   return (s || '').toLowerCase().replace(/\s+/g, ' ').replace(/\s*([([])\s*/g, '$1').trim();
 }
+// True when a topic line is just trainer name(s) -- one name, or several joined
+// with "/" or "," (e.g. "NG SHI HUI (TIFFANY) / LAW YI ERN (ENNA)") -- that are
+// already known from the trainers list.
+function isTrainerCreditLine(line, trainers) {
+  const known = (trainers || []).map(normName);
+  const parts = (line || '').split(/\s*[\/,]\s*/).map(normName).filter(Boolean);
+  return parts.length > 0 && parts.every(p => known.indexOf(p) !== -1);
+}
 function parseSlot(s) {
   const raw = s.activity || '';
   const blocks = raw.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
@@ -2533,7 +2541,7 @@ function parseSlot(s) {
     // to the role-title regex here: a lesson topic can legitimately start
     // with a word like "Therapist" (e.g. "THERAPIST TARGETING SKILLS"), and
     // matching on that alone would wrongly eat real topic text.
-    while (topicLines.length && trainers.some(t => normName(t) === normName(topicLines[topicLines.length - 1]))) {
+    while (topicLines.length && isTrainerCreditLine(topicLines[topicLines.length - 1], trainers)) {
       topicLines.pop();
     }
   } else {
@@ -2543,7 +2551,7 @@ function parseSlot(s) {
     // which is presumed to be the real topic).
     while (topicLines.length > 1 && (
       TRAINER_LINE_RE.test(topicLines[topicLines.length - 1]) ||
-      trainers.some(t => normName(t) === normName(topicLines[topicLines.length - 1]))
+      isTrainerCreditLine(topicLines[topicLines.length - 1], trainers)
     )) {
       const popped = topicLines.pop();
       if (!trainers.some(t => normName(t) === normName(popped))) trainers.unshift(popped);
@@ -2593,7 +2601,7 @@ function parseSlot(s) {
   // "TOPIC / TRAINER / (UR KLINIK GL)"), so it only becomes the last line once
   // the venue line has been pulled out above -- run the same duplicate check
   // again so the trainer isn't left baked into the lesson title.
-  while (topicLines.length > 1 && trainers.some(t => normName(t) === normName(topicLines[topicLines.length - 1]))) {
+  while (topicLines.length > 1 && isTrainerCreditLine(topicLines[topicLines.length - 1], trainers)) {
     topicLines.pop();
   }
   let topic = topicLines.join('\n');
