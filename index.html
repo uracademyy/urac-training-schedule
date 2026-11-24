@@ -2700,12 +2700,25 @@ function renderDashboard() {
   );
 
   let nextExamDate = null;
+  let nextExamHeader = '';
   EXAMS.forEach(e => {
     const d = parseDateFromHeader(e.date_header);
-    if (d && d >= TODAY && (!nextExamDate || d < nextExamDate)) nextExamDate = d;
+    if (d && d >= TODAY && (!nextExamDate || d < nextExamDate)) { nextExamDate = d; nextExamHeader = e.date_header || ''; }
   });
   const daysToExam = nextExamDate ? Math.round((nextExamDate - TODAY) / 86400000) : null;
   startExamCountdown(nextExamDate);
+  // Name the countdown after the exam it is actually counting to (Week 1 / Week 3 / Day 45 / Day 80).
+  const cdLabelEl = document.querySelector('.exam-countdown-label');
+  const hm = /^\s*(week|day)\s*(\d+)/i.exec(nextExamHeader);
+  if (cdLabelEl && hm) {
+    const kind = hm[1].toLowerCase(), num = parseInt(hm[2], 10);
+    if (LANG === 'zh') {
+      const cn = ['零','一','二','三','四','五','六','七','八','九','十'];
+      cdLabelEl.textContent = '距' + (kind === 'week' ? '第' + (cn[num] || num) + '周' : '第' + num + '天') + '考核倒计时';
+    } else {
+      cdLabelEl.textContent = 'Countdown to ' + (kind === 'week' ? 'Week ' : 'Day ') + num + ' Assessment';
+    }
+  }
 
   const strip = document.getElementById('weekStrip');
   strip.innerHTML = '';
