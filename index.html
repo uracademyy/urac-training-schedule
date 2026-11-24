@@ -2589,6 +2589,13 @@ function parseSlot(s) {
       }
     }
   }
+  // The trainer's credit line can sit just above a trailing venue line (e.g.
+  // "TOPIC / TRAINER / (UR KLINIK GL)"), so it only becomes the last line once
+  // the venue line has been pulled out above -- run the same duplicate check
+  // again so the trainer isn't left baked into the lesson title.
+  while (topicLines.length > 1 && trainers.some(t => normName(t) === normName(topicLines[topicLines.length - 1]))) {
+    topicLines.pop();
+  }
   let topic = topicLines.join('\n');
   // Shorten the recurring morning-meeting label. A venue-only row (topic
   // ended up empty once its venue line was pulled out above) is still that
