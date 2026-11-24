@@ -2705,6 +2705,20 @@ function renderDashboard() {
     const d = parseDateFromHeader(e.date_header);
     if (d && d >= TODAY && (!nextExamDate || d < nextExamDate)) { nextExamDate = d; nextExamHeader = e.date_header || ''; }
   });
+  // The Exams sheet doesn't always list the current cohort's assessments, so
+  // also read them straight from this cohort's schedule ("... ASSESSMENT ...").
+  (CALENDAR[currentCohortName] || []).forEach(r => {
+    if (!/assessment/i.test(r.activity || '')) return;
+    const iso = dateIsoFromCalRow(r);
+    if (!iso) return;
+    const d = new Date(parseInt(iso.slice(0, 4), 10), parseInt(iso.slice(5, 7), 10) - 1, parseInt(iso.slice(8, 10), 10));
+    d.setHours(0, 0, 0, 0);
+    if (d < TODAY || (nextExamDate && d >= nextExamDate)) return;
+    const kind = /theory|general knowledge/i.test(r.activity) ? 'Week 1' : (/treatment|customer flow/i.test(r.activity) ? 'Week 3' : '');
+    if (!kind) return;
+    nextExamDate = d;
+    nextExamHeader = kind + ' (' + d.getDate() + '/' + (d.getMonth() + 1) + '/' + d.getFullYear() + ')';
+  });
   const daysToExam = nextExamDate ? Math.round((nextExamDate - TODAY) / 86400000) : null;
   startExamCountdown(nextExamDate);
   // Name the countdown after the exam it is actually counting to (Week 1 / Week 3 / Day 45 / Day 80).
